@@ -1,8 +1,6 @@
 ﻿@using Parcial1_AP1_OrlandoLora.Models
 @using Parcial1_AP1_OrlandoLora.Services
-
-
-
+@rendermode InteractiveServer
 
 <PageTitle>Eliminar Meta</PageTitle>
 <div class="container">
@@ -45,14 +43,14 @@
 @code {
     [Parameter]
     public int MetaId { get; set; }
-    public Metas meta { get; set; } = new Meta();
+    public Metas meta { get; set; } = new Metas();
     public string mensaje { get; set; }
 
 	protected override async Task OnInitializedAsync()
 	{
 		await Task.Delay(500);
-		if (metaId > 0)
-			meta = await MetasService.Buscar(metaId);
+		if (MetaId > 0)
+			meta = await MetasService.Buscar(MetaId);
 	}
 
 	public async Task Eliminar()

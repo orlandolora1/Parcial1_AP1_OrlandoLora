@@ -1,0 +1,206 @@
+﻿@using Parcial1_AP1_OrlandoLora.Models
+@using Parcial1_AP1_OrlandoLora.Services
+@using System.Diagnostics.Metrics
+@rendermode InteractiveServer
+
+
+
+
+<PageTitle>Metas</PageTitle>
+<div class="container">
+	<div class="card shadow-lg">
+		@*Header*@
+		<div class="card-header">
+			<h3><strong>Metas</strong></h3>
+			<button type="button" class="btn btn-outline-primary" @onclick="IrACrear"><i class="bi bi-plus-circle" /> Crear</button>
+			<button type="button" class="btn btn-outline-info" @onclick="IrADetalles"><i class="bi bi-card-list" /> Detalles</button>
+		</div>
+		@*Body*@
+		<div class="card-body">
+			@if (Metas.Count == 0)
+			{
+				<p><em>Cargando...</em></p>
+			}
+			else
+			{
+				@*Fechas*@
+				<div class="mb-3">
+					<div class="row">
+						<div class="col-3">
+							<label class="form-label" for="desde"><strong>Desde:</strong></label>
+							<InputDate id="desde" class="form-control" @bind-Value="desde"></InputDate>
+						</div>
+						<div class="col-3">
+							<label class="form-label" for="hasta"><strong>Hasta:</strong></label>
+							<InputDate id="hasta" class="form-control" @bind-Value="hasta"></InputDate>
+						</div>
+					</div>
+				</div>
+
+				@*Campos a Filtrar*@
+				<div class="mb-3">
+					<div class="row align-items-center">
+						<label class="form-label" for="filtro"><strong>Campo a Filtrar:</strong></label>
+						<div class="col-3">
+							<InputSelect id="filtro" class="form-select" @bind-Value="filtro">
+								<option>Elije una opci&oacute;n</option>
+								<option value="meta id">Meta Id</option>
+								<option value="persona">Persona</option>
+							</InputSelect>
+						</div>
+						<div class="col-auto miFlecha">
+							<p>→</p>
+						</div>
+						<div class="col-4">
+							<div class="input-group">
+								<InputText class="form-control" @bind-Value="valorFiltro" placeholder="Ingrese un dato para filtrar"></InputText>
+								<button type="button" class="btn btn-outline-primary" @onclick="Buscar"><i class="bi bi-search" /></button>
+							</div>
+						</div>
+						<div class="col-3">
+							<button type="button" class="btn btn-outline-secondary" @onclick="Restablecer"><i class="bi bi-arrow-clockwise" /> Restablecer</button>
+						</div>
+					</div>
+				</div>
+
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Meta Id</th>
+							<th>Fecha</th>
+							<th>Persona</th>
+							<th>Observaci&oacute;n</th>
+							<th>Monto</th>
+						</tr>
+					</thead>
+					<tbody>
+						@foreach (var meta in aportes)
+						{
+							<tr>
+								<td>@meta.MetaId</td>
+								<td>@meta.Fecha.ToShortDateString()</td>
+								<td>@meta.Persona</td>
+								<td>@meta.Observacion</td>
+								<td>@meta.Monto</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			}
+		</div>
+		@*Footer*@
+		<div class="card-footer">
+			<div class="row">
+				<div class="col-10">
+					<p><strong>Total de Metas:</strong> @Metas.Count</p>
+				</div>
+				<div class="col">
+					<p><strong>Monto Total:</strong> @montoTotal</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+@mensaje
+
+@code {
+	public List<Metas> aportes = new List<Metas>();
+	public decimal montoTotal { get; set; }
+	public DateTime desde { get; set; } = DateTime.Today;
+	public DateTime hasta { get; set; } = DateTime.Today;
+	public string filtro { get; set; }
+	public string valorFiltro { get; set; }
+	public string mensaje { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		await Task.Delay(500);
+		aportes = await MetasService.Listar(a => a.MetasId > 0);
+		montoTotal = Metas.Sum(a => a.Monto);
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		montoTotal = Metas.Sum(a => a.Monto);
+		StateHasChanged();
+	}
+
+	public async Task Buscar()
+	{
+		if (desde > hasta)
+		{
+			mensaje = "La fecha inicial no puede ser mayor a la fecha final";
+			await Task.Delay(3000);
+			mensaje = string.Empty;
+			return;
+		}
+		if (valorFiltro == null)
+		{
+			mensaje = "Debe ingresar un dato";
+			await Task.Delay(3000);
+			mensaje = string.Empty;
+			return;
+		}
+		List<Metas> filtradoList1 = new List<Metas>();
+		if (filtro == "meta id")
+		{
+			if (int.TryParse(valorFiltro, out int id))
+			{
+				filtradoList1 = await MetasService.Listar(a => a.MetaId == id);
+				Filtrado(filtradoList1);
+			}
+			else
+			{
+				mensaje = "El valor ingresado para MetaId no es válido";
+				await Task.Delay(3000);
+				mensaje = string.Empty;
+			}
+		}
+		else if (filtro == "persona")
+		{
+			filtradoList1 = await MetasService.Listar(a => a.Persona == valorFiltro);
+			Filtrado(filtradoList1);
+		}
+		else
+		{
+			mensaje = "Debe elegir un método parar filtrar";
+			await Task.Delay(3000);
+			mensaje = string.Empty;
+		}
+	}
+
+	public async Task Restablecer()
+	{
+		Metas = await MetasService.Listar(a => a.MetaId > 0);
+		montoTotal = Metas.Sum(a => a.Monto);
+	}
+
+	public async Task Filtrado(List<Metas> filtrados)
+	{
+		List<Metas> filtradoList2 = new List<Metas>();
+		foreach (var filtrado in filtrados)
+		{
+			if (filtrado.Fecha >= desde && filtrado.Fecha <= hasta)
+				filtradoList2.Add(filtrado);
+		}
+
+		if (filtradoList2.Count != 0)
+			Metas = filtradoList2;
+		else
+		{
+			mensaje = "No se encontraron resultados";
+			await Task.Delay(3000);
+			mensaje = string.Empty;
+		}
+	}
+
+	public void IrACrear()
+	{
+		navigation.NavigateTo("/CreateMetas");
+	}
+	public void IrADetalles()
+	{
+		navigation.NavigateTo("/DetailsMetas");
+	}
+}
+

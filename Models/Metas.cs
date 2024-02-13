@@ -19,7 +19,7 @@ namespace Parcial1_AP1_OrlandoLora.Models
 
 		[Range(1, int.MaxValue, ErrorMessage = "El monto debe ser mayor a 0")]
 		public decimal Monto { get; set; }
-		public int MetasId { get; internal set; }
+		public int MetasId { get; set; }
 	}
 }
 

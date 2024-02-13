@@ -1,8 +1,7 @@
 ﻿@using Parcial1_AP1_OrlandoLora.Models
 @using Parcial1_AP1_OrlandoLora.Services
-
-
-
+@using System.Diagnostics.Metrics
+@rendermode InteractiveServer
 
 <PageTitle>Detalles de Meta</PageTitle>
 <div class="container">
@@ -114,14 +113,14 @@
 	public string filtro { get; set; }
 	public string valorFiltro { get; set; }
 	public string mensaje { get; set; }
-
+    
 	protected override async Task OnInitializedAsync()
 	{
 		await Task.Delay(500);
 		metas = await MetasService.Listar(a => a.MetaId > 0);
 		montoTotal = metas.Sum(a => a.Monto);
 	}
-
+	
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
 		montoTotal = metas.Sum(a => a.Monto);
@@ -174,7 +173,7 @@
 
 	public async Task Restablecer()
 	{
-		metas = await MetasService.Listar(a => a.AporteId > 0);
+		metas = await MetasService.Listar(a => a.MetaId > 0);
 		montoTotal = metas.Sum(a => a.Monto);
 	}
 
@@ -210,3 +209,4 @@
 		navigation.NavigateTo($"/DeleteMetas/Metaid={id}");
 	}
 }
+/*
